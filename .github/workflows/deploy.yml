@@ -30,13 +30,18 @@ jobs:
         run: node scripts/generate-index.mjs
 
       - name: Deploy to gh-pages branch
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
+          git fetch origin gh-pages:gh-pages 2>/dev/null || true
           git checkout gh-pages || git checkout -b gh-pages
           git config user.name "GitHub Actions"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          rm -rf .
-          cp -r dist/client/* .
-          cp -r dist/client/.* . 2>/dev/null || true
+          rm -rf assets index.html 404.html .nojekyll
+          cp -r dist/client/assets .
+          cp dist/client/index.html .
+          cp dist/client/404.html .
+          touch .nojekyll
           git add -A
           git commit -m "Deploy: $(date -u +'%Y-%m-%d %H:%M:%S')"
           git push -f origin gh-pages
