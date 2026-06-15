@@ -33,17 +33,25 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          # Save built files before switching branches
+          cp dist/client/index.html /tmp/index.html
+          cp dist/client/404.html /tmp/404.html
+          cp -r dist/client/assets /tmp/assets
+
           git fetch origin gh-pages:gh-pages 2>/dev/null || true
           git checkout gh-pages || git checkout -b gh-pages
           git config user.name "GitHub Actions"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          # Remove everything except .git to start clean
+
+          # Clean working tree completely (keep only .git)
           find . -maxdepth 1 ! -name '.git' -exec rm -rf {} + 2>/dev/null || true
-          # Copy built SPA files
-          cp -r dist/client/assets .
-          cp dist/client/index.html .
-          cp dist/client/404.html .
-          echo "" > .nojekyll
+
+          # Restore built SPA files
+          cp /tmp/index.html .
+          cp /tmp/404.html .
+          cp -r /tmp/assets .
+          touch .nojekyll
+
           git add -A
           git commit -m "Deploy: $(date -u +'%Y-%m-%d %H:%M:%S')"
           git push -f origin gh-pages
