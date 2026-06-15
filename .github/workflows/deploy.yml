@@ -6,16 +6,12 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
-concurrency:
-  group: "pages"
-  cancel-in-progress: false
-
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -30,24 +26,17 @@ jobs:
       - name: Build
         run: bun run build
 
-      - name: Generate index.html
+      - name: Generate index.html and 404.html
         run: node scripts/generate-index.mjs
 
-      - name: Copy dist/client to public
-        run: mkdir -p public && cp -r dist/client/* public/
-
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: "./public"
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Deploy to gh-pages branch
+        run: |
+          git checkout gh-pages || git checkout -b gh-pages
+          git config user.name "GitHub Actions"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          rm -rf .
+          cp -r dist/client/* .
+          cp -r dist/client/.* . 2>/dev/null || true
+          git add -A
+          git commit -m "Deploy: $(date -u +'%Y-%m-%d %H:%M:%S')"
+          git push -f origin gh-pages
