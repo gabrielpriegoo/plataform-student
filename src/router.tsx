@@ -8,7 +8,6 @@ export const getRouter = () => {
   const router = createRouter({
     routeTree,
     context: { queryClient },
-    basepath: "/plataform-student",
     scrollRestoration: true,
     defaultPreloadStaleTime: 0,
   });
